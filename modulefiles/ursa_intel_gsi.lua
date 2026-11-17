@@ -9,67 +9,85 @@ whatis("Machine: NOAA Ursa")
 whatis("Compiler: Intel OneAPI")
 whatis("Application: GSI")
 
--- Compiler
-depends_on(
-    "intel-oneapi-compilers/" ..
-    os.getenv("COMPILER_VERSION")
-)
+-- Helper functions
+local function required_env(name)
+    local value = os.getenv(name)
 
--- MPI
-depends_on(
-    "intel-oneapi-mpi/" ..
-    os.getenv("MPI_VERSION")
-)
+    if not value or value == "" then
+        LmodError(name .. " is not defined")
+    end
 
--- Build tools and libraries
-depends_on("cmake/" .. os.getenv("CMAKE_VERSION"))
-depends_on("netcdf-c/" .. os.getenv("NETCDF_C_VERSION"))
-depends_on("netcdf-fortran/" .. os.getenv("NETCDF_FORTRAN_VERSION"))
-depends_on("hdf5/" .. os.getenv("HDF5_VERSION"))
-depends_on("parallel-netcdf/" .. os.getenv("PNETCDF_VERSION"))
-depends_on("libtirpc/" .. os.getenv("LIBTIRPC_VERSION"))
+    return value
+end
 
--- MKL
+local function discover_prefix(command, name)
+    local prefix = capture(command .. " 2>/dev/null")
+    prefix = prefix:gsub("%s+$", "")
+
+    if prefix == "" then
+        LmodError("Unable to discover " .. name .. " prefix")
+    end
+
+    return prefix
+end
+
+-- Compiler and MPI
+depends_on("intel-oneapi-compilers/" ..
+    required_env("COMPILER_VERSION"))
+
+depends_on("intel-oneapi-mpi/" ..
+    required_env("MPI_VERSION"))
+
+-- Build dependencies
+depends_on("cmake/" .. required_env("CMAKE_VERSION"))
+
+depends_on("netcdf-c/" ..
+    required_env("NETCDF_C_VERSION"))
+
+depends_on("netcdf-fortran/" ..
+    required_env("NETCDF_FORTRAN_VERSION"))
+
+depends_on("hdf5/" .. required_env("HDF5_VERSION"))
+
+depends_on("parallel-netcdf/" ..
+    required_env("PNETCDF_VERSION"))
+
+depends_on("libtirpc/" ..
+    required_env("LIBTIRPC_VERSION"))
+
+-- Intel MKL
 depends_on("intel-oneapi-mkl")
 
--- NetCDF
-local netcdf = os.getenv("NETCDF_ROOT")
+-- Discover NetCDF installation prefixes
+local netcdf_c = discover_prefix("nc-config --prefix", "NetCDF-C")
+local netcdf_fortran = discover_prefix("nf-config --prefix", "NetCDF-Fortran")
 
-if not netcdf or netcdf == "" then
-    LmodError("NETCDF_ROOT is not defined")
-end
-
-setenv("NETCDF", netcdf)
-setenv("NETCDF_C", netcdf)
-setenv("NETCDF_FORTRAN", netcdf)
-
-prepend_path("PATH", netcdf .. "/bin")
-prepend_path("LD_LIBRARY_PATH", netcdf .. "/lib")
-prepend_path("LIBRARY_PATH", netcdf .. "/lib")
-prepend_path("CPATH", netcdf .. "/include")
+-- Export NetCDF paths
+setenv("NETCDF", netcdf_c)
+setenv("NETCDF_C", netcdf_c)
+setenv("NETCDF_FORTRAN", netcdf_fortran)
 
 -- MPI
-setenv("MPI_ROOT", os.getenv("I_MPI_ROOT"))
+local mpi_root = required_env("I_MPI_ROOT")
+setenv("MPI_ROOT", mpi_root)
 
 -- MKL
-setenv("LAPACK_PATH",
-       os.getenv("MKLROOT") .. "/lib/intel64")
+local mkl_root = required_env("MKLROOT")
+setenv("LAPACK_PATH", pathJoin(mkl_root, "lib/intel64"))
 
 -- libtirpc
-local tirpc_root = os.getenv("LIBTIRPC_ROOT")
-
-if not tirpc_root or tirpc_root == "" then
-    LmodError("LIBTIRPC_ROOT is not defined after loading libtirpc")
-end
+local tirpc_root = required_env("LIBTIRPC_ROOT")
 
 setenv("LIBTIRPC_DIR", tirpc_root)
 setenv("LIBTIRPC_INC", pathJoin(tirpc_root, "include/tirpc"))
 setenv("LIBTIRPC_LIB", pathJoin(tirpc_root, "lib"))
 
 -- Application paths
-setenv("WRF_DIR", os.getenv("WRF_DIR"))
-setenv("GSI_ROOT", os.getenv("GSI_ROOT"))
+setenv("WRF_DIR", required_env("WRF_DIR"))
+setenv("GSI_ROOT", required_env("GSI_ROOT"))
 
+-- Build identification
 setenv("MACHINE", "ursa")
 setenv("COMPILER", "intel")
 setenv("COMPONENT", "gsi")
+
