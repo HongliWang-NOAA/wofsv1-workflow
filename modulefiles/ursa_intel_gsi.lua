@@ -33,27 +33,27 @@ end
 
 -- Compiler and MPI
 depends_on("intel-oneapi-compilers/" ..
-    required_env("COMPILER_VERSION"))
+    required_env("compiler_version"))
 
 depends_on("intel-oneapi-mpi/" ..
-    required_env("MPI_VERSION"))
+    required_env("mpi_version"))
 
 -- Build dependencies
-depends_on("cmake/" .. required_env("CMAKE_VERSION"))
+depends_on("cmake/" .. required_env("cmake_version"))
 
 depends_on("netcdf-c/" ..
-    required_env("NETCDF_C_VERSION"))
+    required_env("netcdf_c_version"))
 
 depends_on("netcdf-fortran/" ..
-    required_env("NETCDF_FORTRAN_VERSION"))
+    required_env("netcdf_fortran_version"))
 
-depends_on("hdf5/" .. required_env("HDF5_VERSION"))
+depends_on("hdf5/" .. required_env("hdf5_version"))
 
 depends_on("parallel-netcdf/" ..
-    required_env("PNETCDF_VERSION"))
+    required_env("pnetcdf_version"))
 
 depends_on("libtirpc/" ..
-    required_env("LIBTIRPC_VERSION"))
+    required_env("libtirpc_version"))
 
 -- Intel MKL
 depends_on("intel-oneapi-mkl")
@@ -83,8 +83,8 @@ setenv("LIBTIRPC_INC", pathJoin(tirpc_root, "include/tirpc"))
 setenv("LIBTIRPC_LIB", pathJoin(tirpc_root, "lib"))
 
 -- Application paths
-setenv("WRF_DIR", required_env("WRF_DIR"))
-setenv("GSI_ROOT", required_env("GSI_ROOT"))
+setenv("WRF_DIR", required_env("wrf_dir"))
+-- setenv("GSI_ROOT", required_env("gsi_root"))
 
 -- Build identification
 setenv("MACHINE", "ursa")
